@@ -119,9 +119,14 @@ func moveHead(board [][]string, snakeBody *list.List, command int, score *int) *
 			if i == currI && j == currJ && board[i][j] == FOOD {
 				*score++
 				grow = true
-				food = Food{
-					PosI: rand.Intn((len(board)-1)-0) + 0,
-					PosJ: rand.Intn((len(board)-1)-0) + 0,
+
+				// sometimes the food will be placed at the exact location with the
+				// snake body, so we need to regenerate the food location if it happens
+				for board[food.PosI][food.PosI] == HEAD || (food.PosI == currI && food.PosJ == currJ) {
+					food = Food{
+						PosI: rand.Intn((len(board)-1)-0) + 0,
+						PosJ: rand.Intn((len(board)-1)-0) + 0,
+					}
 				}
 			} else if i == currI && j == currJ && board[i][j] == HEAD {
 				// snake collision with it's own body
