@@ -19,7 +19,7 @@ type Food struct {
 	PosJ int
 }
 
-const HEAD = "o"
+const BODY = "O"
 const FOOD = "*"
 const EMPTY = " "
 
@@ -32,12 +32,18 @@ func main() {
 
 	var boardSize int
 
+	fmt.Println("========== SNAKE ==========")
 	fmt.Println("Welcome to snake game!")
 	fmt.Println("Please input the board size.")
-	fmt.Print("Board size: ")
-	_, err := fmt.Scan(&boardSize)
-	if err != nil {
-		log.Fatal("must input number")
+	for boardSize <= 1 {
+		fmt.Print("Board size: ")
+		_, err := fmt.Scan(&boardSize)
+		if err != nil {
+			log.Fatal("must input number")
+		}
+		if boardSize <= 1 {
+			fmt.Println("must greater than 1")
+		}
 	}
 
 	board := make([][]string, boardSize)
@@ -67,18 +73,17 @@ func main() {
 	var command, round, score int
 	for {
 		clearScreen()
-		fmt.Println("round:", round, "score:", score)
+		fmt.Println("========== SNAKE ==========")
+		fmt.Println("board:", boardSize, "x", boardSize)
+		fmt.Println("round:", round)
+		fmt.Println("score:", score)
+		fmt.Println("length:", snakeBody.Len())
+		fmt.Printf("head coord: i=%v j=%v\n", snakeBody.Front().Value.(SnakeCord).PosI, snakeBody.Front().Value.(SnakeCord).PosJ)
+		fmt.Println()
 		printBoard(board, snakeBody)
-		sc1 := snakeBody.Front().Value.(SnakeCord)
-		sc := snakeBody.Back().Value.(SnakeCord)
-		fmt.Println("Front:", sc1.PosI, sc1.PosJ)
-		fmt.Println("Back:", sc.PosI, sc.PosJ)
-		fmt.Println("Length:", snakeBody.Len())
-		fmt.Println("Grow:", grow)
-		fmt.Println(food)
 		command = getInstruction()
 		if command == 0 {
-			fmt.Println("Good bye!")
+			fmt.Println("\nGood bye! Thanks for playing.")
 			os.Exit(0)
 		}
 
@@ -107,41 +112,37 @@ func moveHead(board [][]string, snakeBody *list.List, command int, score *int) *
 	}
 
 	if currI < 0 || currI > len(board)-1 || currJ < 0 || currJ > len(board)-1 {
-		clearScreen()
-		printBoard(board, snakeBody)
+		fmt.Println("\nGame Over!")
 		fmt.Println("Your head collided with the wall!")
 		os.Exit(0)
-	}
-
-	grow = false
-	for i := range board {
-		for j := range board[i] {
-			if i == currI && j == currJ && board[i][j] == FOOD {
-				*score++
-				grow = true
-
-				// sometimes the food will be placed at the exact location with the
-				// snake body, so we need to regenerate the food location if it happens
-				for board[food.PosI][food.PosI] == HEAD || (food.PosI == currI && food.PosJ == currJ) {
-					food = Food{
-						PosI: rand.Intn((len(board)-1)-0) + 0,
-						PosJ: rand.Intn((len(board)-1)-0) + 0,
-					}
-				}
-			} else if i == currI && j == currJ && board[i][j] == HEAD {
-				// snake collision with it's own body
-				clearScreen()
-				printBoard(board, snakeBody)
-				fmt.Println("You eat your own body!")
-				os.Exit(0)
-			}
-		}
 	}
 
 	snakeBody.PushFront(SnakeCord{
 		PosI: currI,
 		PosJ: currJ,
 	})
+
+	grow = false
+
+	if currI == food.PosI && currJ == food.PosJ {
+		*score++
+		grow = true
+
+		// sometimes the food will be placed at the exact location with the
+		// snake body, so we need to regenerate the food location if it happens
+		for board[food.PosI][food.PosJ] == BODY || (food.PosI == currI && food.PosJ == currJ) {
+			food = Food{
+				PosI: rand.Intn((len(board)-1)-0) + 0,
+				PosJ: rand.Intn((len(board)-1)-0) + 0,
+			}
+		}
+
+	} else if board[currI][currJ] == BODY {
+		// snake collision with it's own body
+		fmt.Println("\nGame Over!")
+		fmt.Println("You eat your own body!")
+		os.Exit(0)
+	}
 
 	if !grow {
 		e := snakeBody.Back()
@@ -196,7 +197,7 @@ func printBoard(board [][]string, snakeBody *list.List) {
 	e := snakeBody.Front()
 	for e != nil {
 		body, _ := e.Value.(SnakeCord)
-		board[body.PosI][body.PosJ] = HEAD
+		board[body.PosI][body.PosJ] = BODY
 		e = e.Next()
 	}
 
